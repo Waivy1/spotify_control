@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+
+
+<head>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+<!-- Latest compiled JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+
+
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+  <link rel="stylesheet" href="https://bootswatch.com/4/lux/bootstrap.css">
+    <meta charset="UTF-8">
+</head>
+
+ <body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <a class="navbar-brand" id='xxx' href="/"> 
+    Spotify's Mood
+  </a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor02" aria-controls="navbarColor02" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarColor02">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item active">
+        <a class="nav-link" href="/">Home <span class="sr-only"></span></a>
+      </li>
+      <li class="nav-item active">
+        <a class="nav-link" href="http://spotify.api/login" target="_blank">Login <span class="sr-only"></span></a>
+      </li>
+   </ul>
+ </nav>
+
+<div class="row">
+
+  <div class="col-sm-1"></div>
+  <div class="col-sm-3">
+    
+    <div class="card text-white bg-primary mb-3" style="max-width: 20rem;">
+      <div class="card-header">
+        <span class="badge badge-light" id="artistName">{{ artist_name }}</span>
+      </div>
+
+      <div class="card-body">
+        <h4 class="card-title" id="songName">{{ song_name }}</h4>
+        <p class="card-text">
+          <span id="albumName">{{ album_name }}</span>
+          <br>
+          <span id="releaseDate"> {{ release_date }} </span> </p>
+
+        <div class="progress">
+        <div class="progress-bar bg-danger"  id="percentProgress"  role="progressbar" style="width: {{ percent_progress }}%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" ></div>
+        </div>
+      </div>
+  </div>
+
+    <div class="card border-secondary mb-3" style="max-width: 20rem;">
+      <div class="card-header">Create playlist</div>
+        <div class="card-body">
+          <h4 class="card-title">
+              <div class="form-group">
+                <label class="col-form-label" for="inputPlaylist" >Input playlist name</label>
+                <input type="text" class="form-control" placeholder="Default input" id="inputPlaylist">
+            </div>
+            <div class="form-group">
+                <label class="col-form-label" for="inputPlaylist" >Input user name</label>
+                <input type="text" class="form-control" placeholder="Default input" id="inputUsername" value="vaginchick">
+            </div>
+          </h4>
+            <div class="row">
+                <div class='col-sm-6'>
+                    <button type="button" id="applyPlaylist" class="btn btn-outline-success">Create playlist</button>
+                 </div>
+                <div class='col-sm-6'>
+
+                    <button type="button" id="AddToPlaylist" class="btn btn-danger">Add to playlist</button>
+                </div>
+          </div>
+        </div>
+      </div>
+
+  </div>
+
+    
+  <div class="col-sm-3">  
+    <div class="list-group" id="moodList" >
+    </div>
+  </div>
+
+  <div class="col-sm-3"> 
+    <div class="alert alert-dismissible alert-success" id="alert1">
+      <strong>Well done!</strong> You successfully created <span id="playlistName"></span> playlist 
+    </div>
+    <div class="list-group" id="list_playlist"></div>
+  </div>
+
+  
+
+</div>
+
+<div class="row">
+
+  <div class="col-sm-1"></div>
+  <div class="col-sm-4"></div>
+  <div class="col-sm-6"></div>
+</div>
+
+ list-group {
+    padding: 20px 25px;
+}
+
+<script type="text/javascript">
+  //global variables
+  trackId = "";
+  playlistId = "";
+  token = '{{ csrf_token }}';
+
+
+
+
+  function updatePlayer(){
+
+    $.ajax({
+        method: "GET",
+        url: "/player_view",
+        success: function(json){
+          $('#songName').html(json['song_name']);
+          $('#artistName').html(json['artist_name']);
+          $('#albumName').html(json['album_name']);
+          $('#releaseDate').html(json['release_date']);
+          $("#percentProgress").css({"width": json['percent_progress'] + "%"});
+          
+          trackId = json['track_id']
+          playlistId = json['playlist_id']
+        } 
+      });
+  }
+
+  function showMood(trackId){
+    $.ajax({
+      method: "GET",
+      url: "/mood/" + trackId,
+      success: function(json_res){ // json_res is javascript dict
+        // var json_str = JSON.stringify(json); // aka json.dumps() // json_str is string
+        
+        $('#moodList').html('');
+
+        $.each(json_res, function(key, value){
+            var html_obj = `
+              <a href="#" class="list-group-item list-group-item-action flex-column align-items-start" style="">
+                <div class="d-flex w-50 justify-content-between">
+                  <h5 class="mb-1" id="${ key}" >${ key }</h5>
+                </div>
+                <p class="mb-1" id="head3">${ value }</p>
+              </a> `
+
+            $('#moodList').append(html_obj)
+        });
+        
+    }});
+  };
+
+
+
+
+  function showPlaylist(playlistId){
+    $.ajax({
+      method: "GET",
+      url: "/list_playlist/" + playlistId,
+      success: function(json_res){ 
+        $('#list_playlist').html('');
+        
+        //json_res = {'list_songs': [{'name': 'th', 'album': 'aeou'}, {}, {}, {}]}
+        
+        songs = json_res['list_songs'];
+        currentPlaylistName = json_res['name'];
+        console.log(currentPlaylistName)
+
+        $('#list_playlist').append(currentPlaylistName)
+        $.each(songs, function(index){
+            var is_active = 'active';
+            var isPlaying = '';
+
+            if (index % 2 == 0){
+              is_active = '';
+            }
+            if (trackId == songs[index]['track_id']){
+              isPlaying = `<span class="badge badge-success">▶</span> `
+            }
+             
+            var html_obj = `
+              <a href="#" class="list-group-item list-group-item-action ${is_active} ">
+                <strong>${isPlaying}${songs[index]['name']}</strong> ${songs[index]['album']} <br>${songs[index]['artist']} 
+              </a>`
+              
+
+            $('#list_playlist').append(html_obj)
+        });
+        
+    }});
+  };
+ 
+
+  $(document).on('click', '#applyPlaylist', function(){ 
+      playlist_name = $('#inputPlaylist').val()
+
+      data_to_send = {
+        "name": playlist_name,
+        "user_id": $('#inputUsername').val(),
+      }
+      
+      $.ajax({
+        method: "post",
+
+        data: JSON.stringify(data_to_send),
+
+        headers: { "X-CSRFToken": token },
+        url: "/playlist",
+        dataType: "json",
+        contentType: "application/json; charset=utf-8",
+
+        success: function(json_response){
+          console.log(json_response);
+          $('#inputPlaylist').val("");
+          var playlistId = json_response['id']
+          $('#inputPlaylist').val(playlistId);
+
+
+          $("#playlistName").html(playlist_name)
+          $("#alert1").show();
+          $("#alert1").hide(5000)
+        },
+      });
+    });
+
+  $(document).on('click', '#AddToPlaylist', function(){ 
+    var playlistId = $('#inputPlaylist').val();
+    var spotTrackId = "spotify:track:" + trackId
+
+      console.log("playlistId", playlistId);
+      console.log("trackId", spotTrackId);
+
+
+      $.ajax({
+        method: "get",
+        url: "/add_to/" + playlistId + "/" + spotTrackId,
+
+        success: function(json_response){
+          console.log(json_response);
+          
+
+
+          $("#playlistName").html(trackId)
+          $("#alert1").show();
+          $("#alert1").hide(5000)
+        },
+      });
+
+  });
+
+  $(document).ready(
+    function() {
+      $("#alert1").css("display","none");
+      
+      setInterval(
+        function(){
+          updatePlayer();
+          showMood(trackId);
+          showPlaylist(playlistId);
+        }
+        , 2000);
+
+  });
+
+
+
+</script>
+
+</body>
+</html>
+
