@@ -3,7 +3,7 @@ This project allows you to get info that is not allowed in the official spotify 
 
 **Features:**
 * All info is displayed in real time via ajax requests
-* Song's rythm and other accousticness for a current playing song
+* Song's rhythm and other acousticness for a current playing song
 * Add a song to a playlist
 * Create a playlist
 * Display current playlist and the song in it
